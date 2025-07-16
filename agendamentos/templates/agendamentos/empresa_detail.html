@@ -1,0 +1,153 @@
+{% extends "agendamentos/base.html" %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+    <h1 class="mb-4">Agendar em {{ empresa.nome }}</h1>
+    <p class="lead">Selecione o serviço, o profissional e a data para encontrar horários disponíveis.</p>
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title">Informações da Empresa</h5>
+            <p><strong>Endereço:</strong> {{ empresa.endereco }}</p>
+            <p><strong>Telefone:</strong> {{ empresa.telefone }}</p>
+            <p><strong>Email:</strong> {{ empresa.email }}</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label for="servicoSelect">Serviço:</label>
+                <select class="form-control" id="servicoSelect">
+                    <option value="">Selecione um serviço</option>
+                    {% for servico in servicos %}
+                        <option value="{{ servico.id }}" data-duracao="{{ servico.duracao }}" data-preco="{{ servico.preco }}">{{ servico.nome }} ({{ servico.duracao }} min - R$ {{ servico.preco|floatformat:2 }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label for="funcionarioSelect">Profissional:</label>
+                <select class="form-control" id="funcionarioSelect">
+                    <option value="">Selecione um profissional</option>
+                    {% for funcionario in funcionarios %}
+                        <option value="{{ funcionario.id }}">{{ funcionario.nome }} ({{ funcionario.cargo }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="dataSelect">Data:</label>
+        <input type="date" class="form-control" id="dataSelect">
+    </div>
+
+    <button class="btn btn-success btn-block mb-4" id="verificarDisponibilidadeBtn">Verificar Disponibilidade</button>
+
+    <div id="horariosDisponiveis" class="mt-4" style="display: none;">
+        <h4>Horários Disponíveis para <span id="selectedFuncionario"></span> em <span id="selectedData"></span> para <span id="selectedServico"></span>:</h4>
+        <div id="slotsContainer" class="list-group mb-3">
+            <!-- Horários serão carregados aqui via JS -->
+        </div>
+        <button class="btn btn-primary btn-block" id="confirmarAgendamentoBtn" style="display: none;">Confirmar Agendamento</button>
+        <button class="btn btn-info btn-block" id="entrarFilaEsperaBtn" style="display: none;">Entrar na Fila de Espera</button>
+    </div>
+
+    <!-- Modal de Confirmação de Agendamento -->
+    <div class="modal fade" id="confirmarAgendamentoModal" tabindex="-1" aria-labelledby="confirmarAgendamentoModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmarAgendamentoModalLabel">Confirmar Agendamento</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Você está prestes a agendar:</p>
+                    <p><strong>Serviço:</strong> <span id="modalServico"></span></p>
+                    <p><strong>Profissional:</strong> <span id="modalFuncionario"></span></p>
+                    <p><strong>Data e Hora:</strong> <span id="modalDataHora"></span></p>
+                    <p><strong>Preço Estimado:</strong> R$ <span id="modalPreco"></span></p>
+                    <hr>
+                    <p>Por favor, preencha seus dados para confirmar:</p>
+                    <div class="form-group">
+                        <label for="clienteNome">Seu Nome:</label>
+                        <input type="text" class="form-control" id="clienteNome" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="clienteEmail">Seu E-mail:</label>
+                        <input type="email" class="form-control" id="clienteEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="clienteTelefone">Seu Telefone (opcional):</label>
+                        <input type="text" class="form-control" id="clienteTelefone">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="finalizarAgendamentoBtn">Agendar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Fila de Espera -->
+    <div class="modal fade" id="filaEsperaModal" tabindex="-1" aria-labelledby="filaEsperaModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="filaEsperaModalLabel">Entrar na Fila de Espera</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Não encontramos horários disponíveis para sua seleção. Gostaria de entrar na fila de espera?</p>
+                    <hr>
+                    <div class="form-group">
+                        <label for="filaClienteNome">Seu Nome:</label>
+                        <input type="text" class="form-control" id="filaClienteNome" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="filaClienteEmail">Seu E-mail:</label>
+                        <input type="email" class="form-control" id="filaClienteEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="filaClienteTelefone">Seu Telefone (opcional):</label>
+                        <input type="text" class="form-control" id="filaClienteTelefone">
+                    </div>
+                    <div class="form-group">
+                        <label for="filaObservacoes">Observações (opcional):</label>
+                        <textarea class="form-control" id="filaObservacoes" rows="3"></textarea>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="flexivelData" checked>
+                        <label class="form-check-label" for="flexivelData">
+                            Sou flexível com a data
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="flexivelHorario" checked>
+                        <label class="form-check-label" for="flexivelHorario">
+                            Sou flexível com o horário
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-info" id="finalizarFilaEsperaBtn">Entrar na Fila</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const empresaId = "{{ empresa.id }}";
+</script>
+{% endblock %}

@@ -1,0 +1,123 @@
+{% extends "agendamentos/base.html" %}
+{% load static %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+    <h1 class="mb-4">{{ titulo }}</h1>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            Informações do Funcionário
+        </div>
+        <div class="card-body">
+            <p><strong>Nome:</strong> {{ funcionario.nome }}</p>
+            <p><strong>E-mail:</strong> {{ funcionario.email }}</p>
+            <p><strong>Cargo:</strong> {{ funcionario.cargo }}</p>
+            <p><strong>Empresa:</strong> {{ funcionario.empresa.nome }}</p>
+        </div>
+    </div>
+
+    <h2 class="mb-3">Agenda Semanal</h2>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <a href="{% url 'agendamentos:agenda_barbeiro_data' semana_anterior.year semana_anterior.month semana_anterior.day %}" class="btn btn-secondary">&laquo; Semana Anterior</a>
+        <h4>{{ inicio_semana|date:"d/m/Y" }} - {{ fim_semana|date:"d/m/Y" }}</h4>
+        <a href="{% url 'agendamentos:agenda_barbeiro_data' proxima_semana.year proxima_semana.month proxima_semana.day %}" class="btn btn-secondary">Próxima Semana &raquo;</a>
+    </div>
+
+    <div class="row">
+        {% for data_dia, agendamentos_dia in agenda_semanal.items %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">{{ data_dia|date:"l, d/m" }}</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if agendamentos_dia %}
+                            <ul class="list-group list-group-flush">
+                                {% for agendamento in agendamentos_dia %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>{{ agendamento.data_hora_inicio|date:"H:i" }} - {{ agendamento.data_hora_fim|date:"H:i" }}</strong><br>
+                                            {{ agendamento.servico.nome }} com {{ agendamento.cliente.nome }}<br>
+                                            <small>Status: {{ agendamento.get_status_display }}</small>
+                                        </div>
+                                        <div>
+                                            <button class="btn btn-danger btn-sm cancelar-agendamento-btn" data-agendamento-id="{{ agendamento.id }}">Cancelar</button>
+                                        </div>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <div class="alert alert-info" role="alert">
+                                Nenhum agendamento.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <h2 class="mt-5 mb-3">Opções</h2>
+    <div class="list-group">
+        <a href="{% url 'agendamentos:agendar_para_cliente' %}" class="list-group-item list-group-item-action">
+            Agendar para um Cliente
+        </a>
+        <a href="{% url 'agendamentos:logout' %}" class="list-group-item list-group-item-action text-danger">
+            Sair (Logout)
+        </a>
+    </div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const cancelarBtns = document.querySelectorAll(".cancelar-agendamento-btn");
+        cancelarBtns.forEach(btn => {
+            btn.addEventListener("click", function() {
+                const agendamentoId = this.dataset.agendamentoId;
+                if (confirm("Tem certeza que deseja cancelar este agendamento?")) {
+                    fetch(`/barbeiro/cancelar_agendamento/${agendamentoId}/`, {
+                        method: "POST",
+                        headers: {
+                            "X-CSRFToken": getCookie("csrftoken"),
+                            "Content-Type": "application/json"
+                        },
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert(data.message);
+                            window.location.reload(); // Recarrega a página para atualizar a lista
+                        } else {
+                            alert("Erro: " + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Erro ao cancelar agendamento:", error);
+                        alert("Erro ao cancelar agendamento. Tente novamente.");
+                    });
+                }
+            });
+        });
+
+ function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== "") {
+                const cookies = document.cookie.split(";");
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + "=")) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    });
+</script>
+{% endblock %}

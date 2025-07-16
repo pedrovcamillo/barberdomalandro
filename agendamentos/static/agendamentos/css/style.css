@@ -1,0 +1,19 @@
+body {
+    padding-top: 0px;
+    background-color: #f8f9fa;
+}
+.navbar {
+    margin-bottom: 20px;
+}
+.card {
+    border: none;
+    border-radius: 0.5rem;
+}
+.card-img-top {
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+}
+.list-group-item {
+    border-radius: 0.5rem;
+    border: 1px solid rgba(0,0,0,.125);
+}

@@ -1,0 +1,39 @@
+{% extends "agendamentos/base.html" %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+    <h1 class="mb-4">Bem-vindo ao Sistema de Agendamentos</h1>
+    <p class="lead">Selecione uma empresa para começar seu agendamento:</p>
+
+    <div class="row">
+        {% for empresa in empresas %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    {% if empresa.logo %}
+                        <img src="{{ empresa.logo.url }}" class="card-img-top" alt="{{ empresa.nome }} Logo" style="height: 180px; object-fit: cover;">
+                    {% else %}
+                        <div class="card-img-top d-flex align-items-center justify-content-center bg-light" style="height: 180px;">
+                            <span class="text-muted">Sem Logo</span>
+                        </div>
+                    {% endif %}
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">{{ empresa.nome }}</h5>
+                        <p class="card-text text-muted">{{ empresa.endereco }}</p>
+                        <p class="card-text">Telefone: {{ empresa.telefone }}</p>
+                        <p class="card-text">Email: {{ empresa.email }}</p>
+                        <div class="mt-auto">
+                            <a href="{% url 'agendamentos:empresa_detail' empresa.id %}" class="btn btn-primary btn-block">Agendar Agora</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="alert alert-info" role="alert">
+                    Nenhuma empresa cadastrada no momento.
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

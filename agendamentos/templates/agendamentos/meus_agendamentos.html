@@ -1,0 +1,50 @@
+{% extends "agendamentos/base.html" %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+    <h1 class="mb-4">Meus Agendamentos</h1>
+    <p class="lead">Consulte seus agendamentos ativos e históricos.</p>
+
+    <form method="GET" class="form-inline mb-4">
+        <div class="form-group mx-sm-3 mb-2">
+            <label for="emailInput" class="sr-only">Seu E-mail</label>
+            <input type="email" class="form-control" id="emailInput" name="email" placeholder="Digite seu e-mail" value="{{ email }}">
+        </div>
+        <button type="submit" class="btn btn-primary mb-2">Buscar Agendamentos</button>
+    </form>
+
+    {% if erro %}
+        <div class="alert alert-warning" role="alert">
+            {{ erro }}
+        </div>
+    {% endif %}
+
+    {% if agendamentos %}
+        <h4>Agendamentos para {{ cliente.nome }}:</h4>
+        <div class="list-group">
+            {% for agendamento in agendamentos %}
+                <div class="list-group-item list-group-item-action flex-column align-items-start mb-2 shadow-sm">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">{{ agendamento.servico.nome }} com {{ agendamento.funcionario.nome }}</h5>
+                        <small class="text-muted">{{ agendamento.data_hora_inicio|date:"d/m/Y H:i" }}</small>
+                    </div>
+                    <p class="mb-1">Empresa: {{ agendamento.empresa.nome }}</p>
+                    <small>Status: <span class="badge badge-{% if agendamento.status == 'confirmado' %}success{% elif agendamento.status == 'pendente' %}warning{% else %}secondary{% endif %}">{{ agendamento.get_status_display }}</span></small>
+                    <p class="mb-1">Preço: R$ {{ agendamento.preco_cobrado|floatformat:2 }}</p>
+                    {% if agendamento.observacoes %}
+                        <p class="mb-1">Observações: {{ agendamento.observacoes }}</p>
+                    {% endif %}
+                    <!-- Botão de cancelar agendamento (implementar lógica JS depois) -->
+                    {% if agendamento.pode_ser_cancelado %}
+                        <button class="btn btn-sm btn-danger mt-2" data-agendamento-id="{{ agendamento.id }}">Cancelar Agendamento</button>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    {% elif email and not erro %}
+        <div class="alert alert-info" role="alert">
+            Nenhum agendamento encontrado para o e-mail <strong>{{ email }}</strong>.
+        </div>
+    {% endif %}
+{% endblock %}
